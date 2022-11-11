@@ -22,8 +22,8 @@ CREATE TABLE snapshots
     PRIMARY KEY (aggregate_type, aggregate_id, last_sequence)
 );
 
--- one view table should be created for every `PostgresViewRepository` used
--- replace name with the value used in `PostgresViewRepository::new(view_name: String)`
+-- one view table should be created for every `SqliteViewRepository` used
+-- replace name with the value used in `SqliteViewRepository::new(view_name: String)`
 CREATE TABLE test_view
 (
     view_id text                        NOT NULL,
@@ -32,8 +32,5 @@ CREATE TABLE test_view
     PRIMARY KEY (view_id)
 );
 
-INSERT INTO public.events (aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata)
+INSERT INTO events (aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata)
 VALUES ('Customer', 'previous_event_in_need_of_upcast', 1, 'NameAdded', '1.0', '{"NameAdded": {}}', '{}');
-
-CREATE USER test_user WITH ENCRYPTED PASSWORD 'test_pass';
-GRANT ALL PRIVILEGES ON DATABASE postgres TO test_user;
