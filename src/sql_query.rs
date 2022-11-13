@@ -15,27 +15,27 @@ impl SqlQueryFactory {
             select_events: format!("
 SELECT aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata
   FROM {}
-  WHERE aggregate_type = $1 AND aggregate_id = $2
+  WHERE aggregate_type = ? AND aggregate_id = ?
   ORDER BY sequence", event_table),
             insert_event: format!("
 INSERT INTO {} (aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata)
-VALUES ($1, $2, $3, $4, $5, $6, $7)", event_table),
+VALUES (?, ?, ?, ?, ?, ?, ?)", event_table),
             all_events: format!("
 SELECT aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata
   FROM {}
-  WHERE aggregate_type = $1
+  WHERE aggregate_type = ?
   ORDER BY sequence", event_table),
             insert_snapshot: format!("
 INSERT INTO {} (aggregate_type, aggregate_id, last_sequence, current_snapshot, payload)
-VALUES ($1, $2, $3, $4, $5)", snapshot_table),
+VALUES (?, ?, ?, ?, ?)", snapshot_table),
             update_snapshot: format!("
 UPDATE {}
-  SET last_sequence= $3 , payload= $6, current_snapshot= $4
-  WHERE aggregate_type= $1 AND aggregate_id= $2 AND current_snapshot= $5", snapshot_table),
+  SET last_sequence= ? , payload= ?, current_snapshot= ?
+  WHERE aggregate_type= ? AND aggregate_id= ? AND current_snapshot= ?", snapshot_table),
             select_snapshot: format!("
 SELECT aggregate_type, aggregate_id, last_sequence, current_snapshot, payload
   FROM {}
-  WHERE aggregate_type = $1 AND aggregate_id = $2", snapshot_table)
+  WHERE aggregate_type = ? AND aggregate_id = ?", snapshot_table)
         }
     }
     pub fn select_events(&self) -> &str {
@@ -61,7 +61,7 @@ SELECT aggregate_type, aggregate_id, last_sequence, current_snapshot, payload
             "
 SELECT aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata
   FROM {}
-  WHERE aggregate_type = $1 AND aggregate_id = $2 AND sequence > {}
+  WHERE aggregate_type = ? AND aggregate_id = ? AND sequence > {}
   ORDER BY sequence",
             &self.event_table, last_sequence
         )
@@ -76,46 +76,46 @@ fn test_queries() {
         "
 SELECT aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata
   FROM my_events
-  WHERE aggregate_type = $1 AND aggregate_id = $2
+  WHERE aggregate_type = ? AND aggregate_id = ?
   ORDER BY sequence"
     );
     assert_eq!(query_factory.insert_event(), "
 INSERT INTO my_events (aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata)
-VALUES ($1, $2, $3, $4, $5, $6, $7)");
+VALUES (?, ?, ?, ?, ?, ?, ?)");
     assert_eq!(
         query_factory.all_events(),
         "
 SELECT aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata
   FROM my_events
-  WHERE aggregate_type = $1
+  WHERE aggregate_type = ?
   ORDER BY sequence"
     );
     assert_eq!(
         query_factory.insert_snapshot(),
         "
 INSERT INTO my_snapshots (aggregate_type, aggregate_id, last_sequence, current_snapshot, payload)
-VALUES ($1, $2, $3, $4, $5)"
+VALUES (?, ?, ?, ?, ?)"
     );
     assert_eq!(
         query_factory.update_snapshot(),
         "
 UPDATE my_snapshots
-  SET last_sequence= $3 , payload= $6, current_snapshot= $4
-  WHERE aggregate_type= $1 AND aggregate_id= $2 AND current_snapshot= $5"
+  SET last_sequence= ? , payload= ?, current_snapshot= ?
+  WHERE aggregate_type= ? AND aggregate_id= ? AND current_snapshot= ?"
     );
     assert_eq!(
         query_factory.select_snapshot(),
         "
 SELECT aggregate_type, aggregate_id, last_sequence, current_snapshot, payload
   FROM my_snapshots
-  WHERE aggregate_type = $1 AND aggregate_id = $2"
+  WHERE aggregate_type = ? AND aggregate_id = ?"
     );
     assert_eq!(
         query_factory.get_last_events(20),
         "
 SELECT aggregate_type, aggregate_id, sequence, event_type, event_version, payload, metadata
   FROM my_events
-  WHERE aggregate_type = $1 AND aggregate_id = $2 AND sequence > 20
+  WHERE aggregate_type = ? AND aggregate_id = ? AND sequence > 20
   ORDER BY sequence"
     );
 }

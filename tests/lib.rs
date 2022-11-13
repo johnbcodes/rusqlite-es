@@ -1,41 +1,52 @@
 use cqrs_es::doc::{Customer, CustomerEvent};
 use cqrs_es::persist::{PersistedEventStore, SemanticVersionEventUpcaster};
 use cqrs_es::EventStore;
-use postgres_es::{default_postgress_pool, PostgresEventRepository};
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+use rusqlite_es::{default_sqlite_pool, SqliteEventRepository};
 use serde_json::Value;
-use sqlx::{Pool, Postgres};
+use std::fs;
 
-const TEST_CONNECTION_STRING: &str = "postgresql://test_user:test_pass@127.0.0.1:5432/test";
+const TEST_CONNECTION_STRING: &str = ":memory:";
 
 async fn new_test_event_store(
-    pool: Pool<Postgres>,
-) -> PersistedEventStore<PostgresEventRepository, Customer> {
-    let repo = PostgresEventRepository::new(pool);
-    PersistedEventStore::<PostgresEventRepository, Customer>::new_event_store(repo)
+    pool: Pool<SqliteConnectionManager>,
+) -> PersistedEventStore<SqliteEventRepository, Customer> {
+    let repo = SqliteEventRepository::new(pool);
+    PersistedEventStore::<SqliteEventRepository, Customer>::new_event_store(repo)
 }
 
 #[tokio::test]
 async fn commit_and_load_events() {
-    let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
-    let repo = PostgresEventRepository::new(pool);
-    let event_store =
-        PersistedEventStore::<PostgresEventRepository, Customer>::new_event_store(repo);
+    let pool = default_sqlite_pool(TEST_CONNECTION_STRING);
+    let contents = fs::read_to_string("db/init.sql").unwrap();
+    let conn = pool.get().unwrap();
+    conn.execute_batch(contents.as_str()).unwrap();
+    drop(conn);
+
+    let repo = SqliteEventRepository::new(pool);
+    let event_store = PersistedEventStore::<SqliteEventRepository, Customer>::new_event_store(repo);
 
     simple_es_commit_and_load_test(event_store).await;
 }
 
 #[tokio::test]
 async fn commit_and_load_events_snapshot_store() {
-    let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
-    let repo = PostgresEventRepository::new(pool);
+    let pool = default_sqlite_pool(TEST_CONNECTION_STRING);
+    let contents = fs::read_to_string("db/init.sql").unwrap();
+    let conn = pool.get().unwrap();
+    conn.execute_batch(contents.as_str()).unwrap();
+    drop(conn);
+
+    let repo = SqliteEventRepository::new(pool);
     let event_store =
-        PersistedEventStore::<PostgresEventRepository, Customer>::new_aggregate_store(repo);
+        PersistedEventStore::<SqliteEventRepository, Customer>::new_aggregate_store(repo);
 
     simple_es_commit_and_load_test(event_store).await;
 }
 
 async fn simple_es_commit_and_load_test(
-    event_store: PersistedEventStore<PostgresEventRepository, Customer>,
+    event_store: PersistedEventStore<SqliteEventRepository, Customer>,
 ) {
     let id = uuid::Uuid::new_v4().to_string();
     assert_eq!(0, event_store.load_events(id.as_str()).await.unwrap().len());
@@ -75,7 +86,12 @@ async fn simple_es_commit_and_load_test(
 
 #[tokio::test]
 async fn upcasted_event() {
-    let pool = default_postgress_pool(TEST_CONNECTION_STRING).await;
+    let pool = default_sqlite_pool(TEST_CONNECTION_STRING);
+    let contents = fs::read_to_string("db/init.sql").unwrap();
+    let conn = pool.get().unwrap();
+    conn.execute_batch(contents.as_str()).unwrap();
+    drop(conn);
+
     let upcaster = SemanticVersionEventUpcaster::new(
         "NameAdded",
         "1.0.1",

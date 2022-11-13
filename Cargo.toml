@@ -1,13 +1,12 @@
 [package]
-name = "postgres-es"
+name = "rusqlite-es"
 version = "0.4.5"
-authors = ["Dave Garred <dave.garred@serverlesstechnology.com>"]
+authors = ["Dave Garred <dave.garred@serverlesstechnology.com>", "John B Codes"]
 edition = "2021"
 license = "Apache-2.0"
 keywords = ["cqrs", "event-sourcing", "serverless"]
-description = "A Postgres implementation of an event repository for cqrs-es."
-repository = "https://github.com/serverlesstechnology/postgres-es"
-documentation = "https://docs.rs/postgres-es"
+description = "An aborted rusqlite implementation of an event repository for cqrs-es."
+repository = "https://github.com/johnbcodes/rusqlite-es"
 readme = "README.md"
 
 [dependencies]
@@ -15,9 +14,11 @@ cqrs-es = "0.4.5"
 
 async-trait = "0.1"
 futures = "0.3"
+r2d2 = "0.8"
+r2d2_sqlite = "0.21"
+rusqlite = { version = "0.28.0", features = ["bundled", "serde_json"] }
 serde = { version = "1.0", features = ["derive"]}
 serde_json = "1.0"
-sqlx = { version = "0.6", features = [ "postgres" , "runtime-tokio-rustls", "json"] }
 tokio = { version = "1", features = ["rt"] }
 
 [dev-dependencies]

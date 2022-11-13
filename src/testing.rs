@@ -1,6 +1,6 @@
 #[cfg(test)]
 pub(crate) mod tests {
-    use crate::PostgresViewRepository;
+    use crate::SqliteViewRepository;
     use async_trait::async_trait;
     use cqrs_es::persist::{GenericQuery, SerializedEvent, SerializedSnapshot};
     use cqrs_es::{Aggregate, DomainEvent, EventEnvelope, View};
@@ -64,8 +64,8 @@ pub(crate) mod tests {
         pub test_name: String,
     }
 
-    #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-    pub struct SomethingElse {
+    #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+    pub(crate) struct SomethingElse {
         pub description: String,
     }
 
@@ -100,7 +100,7 @@ pub(crate) mod tests {
     pub(crate) enum TestCommand {}
 
     pub(crate) type TestQueryRepository =
-        GenericQuery<PostgresViewRepository<TestView, TestAggregate>, TestView, TestAggregate>;
+        GenericQuery<SqliteViewRepository<TestView, TestAggregate>, TestView, TestAggregate>;
 
     #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
     pub(crate) struct TestView {
@@ -113,8 +113,7 @@ pub(crate) mod tests {
         }
     }
 
-    pub(crate) const TEST_CONNECTION_STRING: &str =
-        "postgresql://test_user:test_pass@127.0.0.1:5432/test";
+    pub(crate) const TEST_CONNECTION_STRING: &str = ":memory:";
 
     pub(crate) fn test_event_envelope(
         id: &str,
@@ -125,9 +124,9 @@ pub(crate) mod tests {
         SerializedEvent {
             aggregate_id: id.to_string(),
             sequence,
-            aggregate_type: TestAggregate::aggregate_type().to_string(),
-            event_type: event.event_type().to_string(),
-            event_version: event.event_version().to_string(),
+            aggregate_type: TestAggregate::aggregate_type(),
+            event_type: event.event_type(),
+            event_version: event.event_version(),
             payload,
             metadata: Default::default(),
         }

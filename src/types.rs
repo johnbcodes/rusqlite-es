@@ -1,7 +1,7 @@
-use crate::PostgresEventRepository;
+use crate::SqliteEventRepository;
 use cqrs_es::persist::PersistedEventStore;
 use cqrs_es::CqrsFramework;
 
 /// A convenience type for a CqrsFramework backed by
-/// [PostgresStore](struct.PostgresStore.html).
-pub type PostgresCqrs<A> = CqrsFramework<A, PersistedEventStore<PostgresEventRepository, A>>;
+/// [SqliteEventRepository](struct.SqliteEventRepository.html).
+pub type SqliteCqrs<A> = CqrsFramework<A, PersistedEventStore<SqliteEventRepository, A>>;
